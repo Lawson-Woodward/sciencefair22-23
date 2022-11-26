@@ -8,6 +8,7 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 from os import listdir
+import random
  
 from keras.preprocessing import sequence
 import tensorflow as tf
@@ -27,6 +28,8 @@ channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ
 
 num_channels = 68
 num_samples = 256
+
+subject_dirs = pathlib.Path("C:\eeg\sciencefair22-23\data\eeg_full\processed").glob("co*")
 
 #creates the processing directory where data manipulation will happen
 def create_data_processing_dir(processed_data_dir):
@@ -63,8 +66,7 @@ def extract_files_to_subject(processed_dir, file):
 def create_array(file_name, channels):
     #create empty numpy array
     file_data = np.zeros([num_samples, num_channels], dtype=np.float64)
-    print(file_data)
-
+    #remove the unknown channels
     with open(file_name) as f:
         for line in f:
             newline = line.split(" ")
@@ -78,6 +80,7 @@ def create_array(file_name, channels):
     f.close()
     print(file_data)
 
+    #transform our data into a numpy array
     dirname = os.path.dirname(os.path.abspath(file_name))
     fname = os.path.basename(file_name)
     new_fname = os.path.join(dirname, 'new_' + fname)
@@ -85,17 +88,111 @@ def create_array(file_name, channels):
     my_df.to_csv(new_fname, header=channels, index=False, lineterminator='\n')
     return new_fname
 
+def read_trial_file(trial_file):
+    print("reading file:", trial_file)
+    trial_data_list = pd.read_csv(trial_file, sep='\s+', comment='#', header=0)
+    print(trial_data_list.head())
+    print(trial_data_list.shape)
+    return(trial_data_list)
 
-#created the processing directory:
+def clean_subject_data_files(subject_dirs):
+    subjects = list()
+    trial_files_data = list()
+    for subject_dir in subject_dirs:
+        print(subject_dir)
+        subjects.append(os.path.basename(subject_dir)) # adds all files in the subject dir to the list
+        print("subject is", subjects[-1])
+        trial_files = pathlib.Path(subject_dir).glob("co*")
+        print("trial files are: ")
+        for trial_file in trial_files:
+            print(trial_file)
+            clean_file = create_array(trial_file, channels)
+            trial_files_data.append(read_trial_file(clean_file))
+#        print("trial fiels completed for subject")
+#        print ("trial file 0 was", trial_files_data[0])
+#        print ("Last trial file was", trial_files_data[-1])
+#    print("total number of subjects:", len(subjects))
+    len_trial_files_data = []
+    for trial in trial_files_data:
+        len_trial_files_data.append(len(trial))
+    #all samples are the exact same length
+    print(pd.Series(len_trial_files_data).describe())
+
+#creates the target text file (tells us control or alcohol based on the file name)
+def create_targets_file(subject_dirs):
+    targets=list()
+    for subject_dir in subject_dirs:
+        print(subject_dir)
+        trial_files = pathlib.Path(subject_dir).glob("co*")
+        a_or_c = os.path.basename(subject_dir)[3]
+        if a_or_c == "a":
+            a_or_c = "1"
+        else:
+            a_or_c = "-1"
+        print("subject is", a_or_c)
+        for trial_file in trial_files:
+            fn = os.path.basename(trial_file)
+            x = [fn, a_or_c]
+            print(x)
+            targets.append(x)
+        my_df = pd.DataFrame(targets)
+        fn = os.path.join(processed_data_dir, 'targets.csv')
+        print("added", fn)
+        my_df.to_csv(fn, header=['#sequence_ID', 'class_label'], index=False, lineterminator='\n')
+
+def create_groups_list(subject_dirs):
+    targets = list()
+    a = list()
+    c = list()
+    for subject_dir in subject_dirs:
+        print(subject_dir)
+        trial_files = pathlib.Path(subject_dir).glob("co*")
+        a_or_c = os.path.basename(subject_dir)[3]
+        if a_or_c == "a":
+            a.append(subject_dir)
+        else:
+            c.append(subject_dir)
+    print(len(a))
+    print(len(c))
+
+    count=1
+    for subject_dir in a:
+        trial_files = pathlib.Path(subject_dir).glob("co*")
+        for trial_file in trial_files:
+            fn = os.path.basename(trial_file)
+            x = [fn, a_or_c]
+            print(x)
+            targets.append(x)
+        my_df = pd.DataFrame(targets)
+        fn = os.path.join(processed_data_dir, 'groups.csv')
+        print("added", fn)
+        my_df.to_csv(fn, header=['#sequence_ID', 'class_label'], index=False, lineterminator='\n')    
+        if count == 3:
+            count = 0
+        count += 1
+
+
+
+
+
+ #created the processing directory:
 #create_data_processing_dir(processed_data_dir)
 
-#extracted each subject to the processing direcotry
+ #extracted each subject to the processing direcotry
 #extract_subjects_to_dir(full_data_dir, processed_data_dir)
 
-#extracted all of the subject files for each subject the processing directory:
+ #extracted all of the subject files for each subject the processing directory:
 #for file in pathlib.Path(processed_data_dir).glob("co*"):
-#    print ("file is %s" % file)
-#    extract_files_to_subject(processed_data_dir, file)
+#   print ("file is %s" % file)
+#   extract_files_to_subject(processed_data_dir, file)
 
-create_array("C:/eeg/sciencefair22-23/data/eeg_full/processed/co2a0000364/co2a0000364.rd.000", channels)
+ #create the array for a datafile within the subject files, then put it in a text file (and read it)
+#create_array("C:/eeg/sciencefair22-23/data/eeg_full/processed/co2a0000364/co2a0000364.rd.000", channels)
+#read_trial_file("C:/eeg/sciencefair22-23/data/eeg_full/processed/co2a0000364/new_co2a0000364.rd.000")
 
+#creates a cleaned up version of every single trial file in the subject files provided
+clean_subject_data_files(subject_dirs)
+
+create_targets_file(subject_dirs)
+
+#create_groups_file(subject_dirs)
