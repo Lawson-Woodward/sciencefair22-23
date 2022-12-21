@@ -140,7 +140,7 @@ def create_targets_file(subject_dirs):
         print("added", fn)
         my_df.to_csv(fn, header=['#sequence_ID', 'class_label'], index=False, lineterminator='\n')
 
-def create_groups_list(subject_dirs):
+def create_groups_file(subject_dirs):
     targets = list()
     a = list()
     c = list()
@@ -160,7 +160,22 @@ def create_groups_list(subject_dirs):
         trial_files = pathlib.Path(subject_dir).glob("co*")
         for trial_file in trial_files:
             fn = os.path.basename(trial_file)
-            x = [fn, a_or_c]
+            x = [fn, count]
+            print(x)
+            targets.append(x)
+        my_df = pd.DataFrame(targets)
+        fn = os.path.join(processed_data_dir, 'groups.csv')
+        print("added", fn)
+        my_df.to_csv(fn, header=['#sequence_ID', 'class_label'], index=False, lineterminator='\n')    
+        if count == 3:
+            count = 0
+        count += 1
+
+    for subject_dir in c:
+        trial_files = pathlib.Path(subject_dir).glob("co*")
+        for trial_file in trial_files:
+            fn = os.path.basename(trial_file)
+            x = [fn, count]
             print(x)
             targets.append(x)
         my_df = pd.DataFrame(targets)
@@ -191,8 +206,8 @@ def create_groups_list(subject_dirs):
 #read_trial_file("C:/eeg/sciencefair22-23/data/eeg_full/processed/co2a0000364/new_co2a0000364.rd.000")
 
 #creates a cleaned up version of every single trial file in the subject files provided
-clean_subject_data_files(subject_dirs)
+#clean_subject_data_files(subject_dirs)
 
-create_targets_file(subject_dirs)
+#create_targets_file(subject_dirs)
 
-#create_groups_file(subject_dirs)
+create_groups_file(subject_dirs)
