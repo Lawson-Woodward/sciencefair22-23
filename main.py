@@ -31,15 +31,13 @@ num_samples = 256
 
 subject_dirs = pathlib.Path("C:\eeg\sciencefair22-23\data\eeg_full\processed").glob("co*")
 
-#creates the processing directory where data manipulation will happen
 def create_data_processing_dir(processed_data_dir):
     try:
         os.makedirs(processed_data_dir, exist_ok = True)
-        print ("Target dir '%s' for processed data successfully created" % processed_data_dir)
+        #print ("Target dir '%s' for processed data successfully created" % processed_data_dir)
     except OSError as error:
         print ("Directory '%s' cannot be created" % processed_data_dir)
 
-#extracts subject files in the data folder
 def extract_subjects_to_dir(full_dir, processed_dir):   
     for file in pathlib.Path(full_dir).glob('*.tar.gz'):
         #input = tarfile.open(file)
@@ -49,7 +47,6 @@ def extract_subjects_to_dir(full_dir, processed_dir):
         subject.extractall(processed_dir)
         subject.close()
 
-#extracts files in the subject files
 def extract_files_to_subject(processed_dir, file):
     subject_dir = os.path.join(processed_dir, os.path.basename(file)).replace(".tar.gz", "")
     for subject_file in pathlib.Path(subject_dir).glob("*.gz"):
@@ -60,7 +57,7 @@ def extract_files_to_subject(processed_dir, file):
                     shutil.copyfileobj(in_file, out_file)
             os.remove(subject_file)
         except:
-            print("Couldn't print the file named", subject_file, "because of error.")
+            #print("Couldn't print the file named", subject_file, "because of error.")
             continue
 
 def create_array(file_name, channels):
@@ -78,9 +75,8 @@ def create_array(file_name, channels):
                 file_data[int(newline[2]), int(index)] = newline[3]
     
     f.close()
-    print(file_data)
+    #print(file_data)
 
-    #transform our data into a numpy array
     dirname = os.path.dirname(os.path.abspath(file_name))
     fname = os.path.basename(file_name)
     new_fname = os.path.join(dirname, 'new_' + fname)
@@ -89,55 +85,54 @@ def create_array(file_name, channels):
     return new_fname
 
 def read_trial_file(trial_file):
-    print("reading file:", trial_file)
+    #print("reading file:", trial_file)
     trial_data_list = pd.read_csv(trial_file, sep='\s+', comment='#', header=0)
-    print(trial_data_list.head())
-    print(trial_data_list.shape)
+    #print(trial_data_list.head())
+    #print(trial_data_list.shape)
     return(trial_data_list)
 
 def clean_subject_data_files(subject_dirs):
     subjects = list()
     trial_files_data = list()
     for subject_dir in subject_dirs:
-        print(subject_dir)
+        #print(subject_dir)
         subjects.append(os.path.basename(subject_dir)) # adds all files in the subject dir to the list
-        print("subject is", subjects[-1])
+        #print("subject is", subjects[-1])
         trial_files = pathlib.Path(subject_dir).glob("co*")
-        print("trial files are: ")
+        #print("trial files are: ")
         for trial_file in trial_files:
-            print(trial_file)
+            #print(trial_file)
             clean_file = create_array(trial_file, channels)
             trial_files_data.append(read_trial_file(clean_file))
-#        print("trial fiels completed for subject")
-#        print ("trial file 0 was", trial_files_data[0])
-#        print ("Last trial file was", trial_files_data[-1])
-#    print("total number of subjects:", len(subjects))
+#       print("trial fiels completed for subject")
+#       print ("trial file 0 was", trial_files_data[0])
+#       print ("Last trial file was", trial_files_data[-1])
+#       print("total number of subjects:", len(subjects))
     len_trial_files_data = []
     for trial in trial_files_data:
         len_trial_files_data.append(len(trial))
-    #all samples are the exact same length
-    print(pd.Series(len_trial_files_data).describe())
+    #all samples are the exact same length, so we have it easy here
+    #print(pd.Series(len_trial_files_data).describe())
 
-#creates the target text file (tells us control or alcohol based on the file name)
 def create_targets_file(subject_dirs):
     targets=list()
     for subject_dir in subject_dirs:
-        print(subject_dir)
+        #print(subject_dir)
         trial_files = pathlib.Path(subject_dir).glob("co*")
         a_or_c = os.path.basename(subject_dir)[3]
         if a_or_c == "a":
             a_or_c = "1"
         else:
             a_or_c = "-1"
-        print("subject is", a_or_c)
+        #print("subject is", a_or_c)
         for trial_file in trial_files:
             fn = os.path.basename(trial_file)
             x = [fn, a_or_c]
-            print(x)
+            #print(x)
             targets.append(x)
         my_df = pd.DataFrame(targets)
         fn = os.path.join(processed_data_dir, 'targets.csv')
-        print("added", fn)
+        #print("added", fn)
         my_df.to_csv(fn, header=['#sequence_ID', 'class_label'], index=False, lineterminator='\n')
 
 def create_groups_file(subject_dirs):
@@ -145,42 +140,26 @@ def create_groups_file(subject_dirs):
     a = list()
     c = list()
     for subject_dir in subject_dirs:
-        print(subject_dir)
+        #print(subject_dir)
         trial_files = pathlib.Path(subject_dir).glob("co*")
         a_or_c = os.path.basename(subject_dir)[3]
         if a_or_c == "a":
             a.append(subject_dir)
         else:
             c.append(subject_dir)
-    print(len(a))
-    print(len(c))
 
+    subjects = a + c
     count=1
-    for subject_dir in a:
+    for subject_dir in subjects:
         trial_files = pathlib.Path(subject_dir).glob("co*")
         for trial_file in trial_files:
             fn = os.path.basename(trial_file)
             x = [fn, count]
-            print(x)
+            #print(x)
             targets.append(x)
         my_df = pd.DataFrame(targets)
         fn = os.path.join(processed_data_dir, 'groups.csv')
-        print("added", fn)
-        my_df.to_csv(fn, header=['#sequence_ID', 'class_label'], index=False, lineterminator='\n')    
-        if count == 3:
-            count = 0
-        count += 1
-
-    for subject_dir in c:
-        trial_files = pathlib.Path(subject_dir).glob("co*")
-        for trial_file in trial_files:
-            fn = os.path.basename(trial_file)
-            x = [fn, count]
-            print(x)
-            targets.append(x)
-        my_df = pd.DataFrame(targets)
-        fn = os.path.join(processed_data_dir, 'groups.csv')
-        print("added", fn)
+        #print("added", fn)
         my_df.to_csv(fn, header=['#sequence_ID', 'class_label'], index=False, lineterminator='\n')    
         if count == 3:
             count = 0
@@ -190,24 +169,27 @@ def create_groups_file(subject_dirs):
 
 
 
- #created the processing directory:
+  #created the processing directory:
 #create_data_processing_dir(processed_data_dir)
 
- #extracted each subject to the processing direcotry
+  #extracted each subject to the processing direcotry
 #extract_subjects_to_dir(full_data_dir, processed_data_dir)
 
- #extracted all of the subject files for each subject the processing directory:
+  #extracted all of the subject files for each subject the processing directory:
 #for file in pathlib.Path(processed_data_dir).glob("co*"):
 #   print ("file is %s" % file)
 #   extract_files_to_subject(processed_data_dir, file)
 
- #create the array for a datafile within the subject files, then put it in a text file (and read it)
+  #create the array for a datafile within the subject files, then put it in a text file (and read it)
 #create_array("C:/eeg/sciencefair22-23/data/eeg_full/processed/co2a0000364/co2a0000364.rd.000", channels)
 #read_trial_file("C:/eeg/sciencefair22-23/data/eeg_full/processed/co2a0000364/new_co2a0000364.rd.000")
 
-#creates a cleaned up version of every single trial file in the subject files provided
+  #creates a cleaned up version of every single trial file in the subject files provided
 #clean_subject_data_files(subject_dirs)
 
+  #creates the file that labels all subjects as a/c
 #create_targets_file(subject_dirs)
 
-create_groups_file(subject_dirs)
+  #creates the file that equally distributes the a/c files among 3 groups
+#create_groups_file(subject_dirs)
+
