@@ -22,6 +22,9 @@ from keras.callbacks import ModelCheckpoint
 
 full_data_dir = 'C:/eeg/sciencefair22-23/data/eeg_full/'
 processing_dir = 'processed'
+# '.join' returns (to the .path method) a string of
+#  the concatenated path components with exactly one directory separator (‘/’) following each non-empty part except the last path component
+#  .join( , ) takes in a file system path as the first parameter, and then however many strings to concatenate on top of it
 processed_data_dir = os.path.join(full_data_dir, processing_dir)
 
 channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ', 'FT7', 'FT8', 'FZ','O1','O2','OZ','POZ','PZ','PO1','PO2','PO7','PO8', 'S1', 'T7','T8','TP7','TP8'] + [f'F{n:01}' for n in range(1,9)] + [f'C{n:01}' for n in range(1,8)] + [f'CP{n:01}' for n in range(1,7)] + [f'F{n:01}' for n in range(1,6)]  + [f'FC{n:01}' for n in range(1,7)] + [f'P{n:01}' for n in range(1,9)]
@@ -168,8 +171,7 @@ def create_groups_file(subject_dirs):
 
 
 
-
-  #created the processing directory:
+#created the processing directory:
 #create_data_processing_dir(processed_data_dir)
 
   #extracted each subject to the processing direcotry
