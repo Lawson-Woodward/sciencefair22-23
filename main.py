@@ -40,7 +40,7 @@ num_channels = 68
 num_samples = 256
 
 subject_dirs = pathlib.Path("C:\eeg\sciencefair22-23\data\eeg_full\processed").glob("co*")
-print(subject_dirs)
+
 
 #===========================================================================================#
 #WRITING FUNCTIONS THAT WE WILL LATER CALL
@@ -209,5 +209,4 @@ def create_groups_file(subject_dirs):
 
   #creates the file that equally distributes the a/c files among 3 groups
 #create_groups_file(subject_dirs)
-
 
