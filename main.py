@@ -9,10 +9,11 @@ import tarfile
 import gzip
 import shutil
 import logging
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 from os import listdir
-import random
+import sklearn
 
 from keras.preprocessing import sequence
 import tensorflow as tf
@@ -139,7 +140,7 @@ def create_targets_file(subject_dirs):
         if a_or_c == "a":
             a_or_c = "1"
         else:
-            a_or_c = "-1"
+            a_or_c = "0"
         print("subject is", a_or_c)
         for trial_file in trial_files:
             fn = os.path.basename(trial_file)
@@ -183,7 +184,7 @@ def create_groups_file(subject_dirs):
 
 
 #===========================================================================================#
-#CALLING ALL OF THE FUNCTIONS THAT WERE WRITTEN
+#CALLING ALL OF THE FUNCTIONS THAT WERE WRITTEN SO FAR
 #===========================================================================================#
 
   #created the processing directory:
@@ -209,3 +210,92 @@ def create_groups_file(subject_dirs):
 
   #creates the file that equally distributes the a/c files among 3 groups
 #create_targets_file(subject_dirs)
+
+
+#===========================================================================================#
+#READ IN DATA AND SEPARATE IT BASED ON GROUP INTO TRAIN, VALIDATION, AND TEST SETS
+#===========================================================================================#
+
+#datasetgroup_file =  os.path.join(processed_data_dir,'DataSetGroup.csv')
+groupsFile =  os.path.join(processed_data_dir,'minigroups.csv')
+#targets_file = os.path.join(processed_data_dir,'targets.csv')
+targetsFile = os.path.join(processed_data_dir,'minitargets.csv')
+trials = pd.read_csv(groupsFile)
+
+train_raw = trials.loc[trials['dataset_ID']==1]
+validation_raw = trials.loc[trials['dataset_ID']==2]
+test_raw = trials.loc[trials['dataset_ID']==3]
+print(train_raw)
+print(validation_raw)
+print(test_raw)
+
+train = list()
+validation = list()
+test = list()
+
+for i in train_raw.index:
+    fn = train_raw['#sequence_ID'][i]
+    dir = fn.replace('new_','')
+    dir = re.sub(".rd.*",'', dir)
+    infile = os.path.join(full_data_dir, processing_dir + '/' + dir + '/' + fn)
+    df = pd.read_csv(infile, header=0)
+    values = df.values
+    train.append(values)
+
+for i in validation_raw.index:
+    fn = validation_raw['#sequence_ID'][i]
+    dir = fn.replace('new_','')
+    dir = re.sub(".rd.*",'', dir)
+    infile = os.path.join(full_data_dir, processing_dir + '/' + dir + '/' + fn)
+    df = pd.read_csv(infile, header=0)
+    values = df.values
+    validation.append(values)
+
+for i in test_raw.index:
+    fn = test_raw['#sequence_ID'][i]
+    dir = fn.replace('new_','')
+    dir = re.sub(".rd.*",'', dir)
+    infile = os.path.join(full_data_dir, processing_dir + '/' + dir + '/' + fn)
+    df = pd.read_csv(infile, header=0)
+    values = df.values
+    test.append(values)
+
+train=np.array(train).round(5)
+validation=np.array(validation).round(5)
+test=np.array(test).round(5)
+np.set_printoptions(suppress=True)
+print('\n\nTRAIN SET:\n', train)
+print('\n\nVALIDATION SET:\n', validation)
+print('\n\nTEST SET:\n', test)
+
+
+#===========================================================================================#
+#CREATE TARGET VALUE ARRAYS TO MATCH THE TRAIN, VALIDATION, AND TEST ARRAYS
+#===========================================================================================#
+
+targetsInfo = pd.read_csv(targetsFile)
+groupsInfo = pd.read_csv(groupsFile)
+mergedInfo = pd.merge(targetsInfo, groupsInfo, on='#sequence_ID', how='outer')
+print(mergedInfo)
+
+raw_train_target = mergedInfo.loc[mergedInfo['dataset_ID']==1]
+raw_validation_target = mergedInfo.loc[mergedInfo['dataset_ID']==2]
+raw_test_target = mergedInfo.loc[mergedInfo['dataset_ID']==3]
+
+train_target = raw_train_target['class_label']
+validation_target = raw_validation_target['class_label']
+test_target = raw_test_target['class_label']
+
+print(raw_train_target)
+print(raw_validation_target)
+print(raw_test_target)
+
+train_target = np.array(train_target)
+validation_target = np.array(validation_target)
+test_target = np.array(test_target)
+
+print(train_target)
+print(validation_target)
+print(test_target)
+
+
