@@ -13,13 +13,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from os import listdir
 import random
- 
+
 from keras.preprocessing import sequence
 import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
- 
+
 from keras.optimizers import Adam
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint
@@ -53,12 +53,12 @@ def create_data_processing_dir(processed_data_dir):
     except OSError as error:
         print ("Directory '%s' cannot be created" % processed_data_dir)
 
-def extract_subjects_to_dir(full_dir, processed_dir):   
+def extract_subjects_to_dir(full_dir, processed_dir):
     for file in pathlib.Path(full_dir).glob('*.tar.gz'):
         input = tarfile.open(file)
         input.extractall(processed_dir)
         input.close()
-        subject = tarfile.open(file, "r:gz") 
+        subject = tarfile.open(file, "r:gz")
         subject.extractall(processed_dir)
         subject.close()
 
@@ -88,7 +88,7 @@ def create_array(file_name, channels):
             else:
                 index = channels.index(newline[1])
                 file_data[int(newline[2]), int(index)] = newline[3]
-    
+
     f.close()
     #print(file_data)
 
@@ -112,7 +112,7 @@ def clean_subject_data_files(subject_dirs):
     for subject_dir in subject_dirs:
         print(subject_dir)
         #adds all files in the subject dir to the list
-        subjects.append(os.path.basename(subject_dir)) 
+        subjects.append(os.path.basename(subject_dir))
         print("subject is", subjects[-1])
         trial_files = pathlib.Path(subject_dir).glob("co*")
         print("trial files are: ")
@@ -134,7 +134,7 @@ def create_targets_file(subject_dirs):
     targets=list()
     for subject_dir in subject_dirs:
         print(subject_dir)
-        trial_files = pathlib.Path(subject_dir).glob("co*")
+        trial_files = pathlib.Path(subject_dir).glob("new*")
         a_or_c = os.path.basename(subject_dir)[3]
         if a_or_c == "a":
             a_or_c = "1"
@@ -157,7 +157,7 @@ def create_groups_file(subject_dirs):
     c = list()
     for subject_dir in subject_dirs:
         print(subject_dir)
-        trial_files = pathlib.Path(subject_dir).glob("co*")
+        trial_files = pathlib.Path(subject_dir).glob("new*")
         a_or_c = os.path.basename(subject_dir)[3]
         if a_or_c == "a":
             a.append(subject_dir)
@@ -167,16 +167,16 @@ def create_groups_file(subject_dirs):
     subjects = a + c
     count=1
     for subject_dir in subjects:
-        trial_files = pathlib.Path(subject_dir).glob("co*")
+        trial_files = pathlib.Path(subject_dir).glob("new*")
         for trial_file in trial_files:
             fn = os.path.basename(trial_file)
             x = [fn, count]
             print(x)
             targets.append(x)
-        my_df = pd.DataFrame(targets)
+        my_df = pd.DataFrame(np.array(targets))
         fn = os.path.join(processed_data_dir, 'groups.csv')
         print("added", fn)
-        my_df.to_csv(fn, header=['#sequence_ID', 'dataset_ID'], index=False, lineterminator='\n')    
+        my_df.to_csv(fn, header=['#sequence_ID', 'dataset_ID'], index=False, lineterminator='\n')
         if count == 3:
             count = 0
         count += 1
@@ -205,8 +205,7 @@ def create_groups_file(subject_dirs):
 #clean_subject_data_files(subject_dirs)
 
   #creates the file that labels all subjects as a/c
-#create_targets_file(subject_dirs)
-
-  #creates the file that equally distributes the a/c files among 3 groups
 #create_groups_file(subject_dirs)
 
+  #creates the file that equally distributes the a/c files among 3 groups
+#create_targets_file(subject_dirs)
