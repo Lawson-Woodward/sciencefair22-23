@@ -4,8 +4,8 @@
 
 import pandas as pd
 import os
-import pathlib
-import tarfile
+import pathlib  #Deals with paths like OS
+import tarfile  #Allows to open the tarFile
 import gzip
 import shutil
 import logging
@@ -30,42 +30,44 @@ from keras.callbacks import ModelCheckpoint
 #DEFINING IMPORTANT VARIABLES
 #===========================================================================================#
 
-full_data_dir = 'C:/eeg/sciencefair22-23/data/eeg_full/'
+full_data_dir = 'C:/eeg/sciencefair22-23/data/eeg_full/'  
 processing_dir = 'processed'
-processed_data_dir = os.path.join(full_data_dir, processing_dir)
+processed_data_dir = os.path.join(full_data_dir, processing_dir) #Creating a new file path called, C:/eeg/sciencefair22-23/data/eeg_full/processed
 
-#we need to check these channel names still
-channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ', 'FT7', 'FT8', 'FZ','O1','O2','OZ','POZ','PZ','PO1','PO2','PO7','PO8', 'S1', 'T7','T8','TP7','TP8'] + [f'F{n:01}' for n in range(1,9)] + [f'C{n:01}' for n in range(1,8)] + [f'CP{n:01}' for n in range(1,7)] + [f'F{n:01}' for n in range(1,6)]  + [f'FC{n:01}' for n in range(1,7)] + [f'P{n:01}' for n in range(1,9)]
 
-num_channels = 68
+channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ', 'FT7', 'FT8', 'FZ','O1','O2','OZ','POZ','PZ','PO1','PO2','PO7','PO8', 'S1', 'T7','T8','TP7','TP8'] + [f'F{n:01}' for n in range(1,9)] + [f'C{n:01}' for n in range(1,8)] + [f'CP{n:01}' for n in range(1,7)] + [f'F{n:01}' for n in range(1,6)]  + [f'FC{n:01}' for n in range(1,7)] + [f'P{n:01}' for n in range(1,9)] 
+
+num_channels = 68 #Important for Machine Learning, specifes paramaters
 num_samples = 256
 
-subject_dirs = pathlib.Path("C:\eeg\sciencefair22-23\data\eeg_full\processed").glob("co*")
+subject_dirs = pathlib.Path("C:\eeg\sciencefair22-23\data\eeg_full\processed").glob("co*") #Finding all files that starts with co
 
 
 #===========================================================================================#
 #WRITING FUNCTIONS THAT WE WILL LATER CALL
 #===========================================================================================#
 
-def create_data_processing_dir(processed_data_dir):
+def create_data_processing_dir(processed_data_dir): #If no folder named processing, it creates one to store in the processed data later
     try:
         os.makedirs(processed_data_dir, exist_ok = True)
         print ("Target dir '%s' for processed data successfully created" % processed_data_dir)
     except OSError as error:
         print ("Directory '%s' cannot be created" % processed_data_dir)
 
-def extract_subjects_to_dir(full_dir, processed_dir):
+def extract_subjects_to_dir(full_dir, processed_dir): #For every single file that ends with tar.gz it extracts into the processed directory
     for file in pathlib.Path(full_dir).glob('*.tar.gz'):
-        input = tarfile.open(file)
-        input.extractall(processed_dir)
+        input = tarfile.open(file) 
+        input.extractall(processed_dir) #Untars and unzips it
         input.close()
-        subject = tarfile.open(file, "r:gz")
+
+        subject = tarfile.open(file, "r:gz") #It extracts to the processed directory
         subject.extractall(processed_dir)
         subject.close()
 
-def extract_files_to_subject(processed_dir, file):
+#processed dir > patients (co) > # of trials > list of electrodes
+def extract_files_to_subject(processed_dir, file): #Uncompresses which removes the gz file extension, is called in a for loop
     subject_dir = os.path.join(processed_dir, os.path.basename(file)).replace(".tar.gz", "")
-    for subject_file in pathlib.Path(subject_dir).glob("*.gz"):
+    for subject_file in pathlib.Path(subject_dir).glob("*.gz"): #subject_file = trials
         try:
             with gzip.open(subject_file,'rb') as in_file:
                 subject_out_file = subject_file.with_suffix('')
@@ -76,8 +78,8 @@ def extract_files_to_subject(processed_dir, file):
             print("Couldn't print the file named", subject_file, "because of error.")
             continue
 
-def create_array(file_name, channels):
-    #create empty numpy array
+def create_array(file_name, channels): #Called in a for loop, creates an array for all the data
+    #creates empty numpy array
     file_data = np.zeros([num_samples, num_channels], dtype=np.float64)
     #remove the unknown channels
     with open(file_name) as f:
@@ -86,28 +88,29 @@ def create_array(file_name, channels):
             if(newline[0] == "#" or newline[1] == "nd" or newline[1] == "Y" or
             newline[1] == "N" or newline[1] == "X"):
                 pass
-            else:
+            else: 
                 index = channels.index(newline[1])
                 file_data[int(newline[2]), int(index)] = newline[3]
 
     f.close()
     #print(file_data)
 
-    dirname = os.path.dirname(os.path.abspath(file_name))
+    #Puts all the data into a csv file
+    dirname = os.path.dirname(os.path.abspath(file_name)) 
     fname = os.path.basename(file_name)
     new_fname = os.path.join(dirname, 'new_' + fname)
     my_df = pd.DataFrame(file_data)
     my_df.to_csv(new_fname, header=channels, index=False, lineterminator='\n')
     return new_fname
 
-def read_trial_file(trial_file):
-    print("reading file:", trial_file)
+def read_trial_file(trial_file): #Getting the data
+    print("reading file:", trial_file) #trial_file is a csv file
     trial_data_list = pd.read_csv(trial_file, sep='\s+', comment='#', header=0)
     print(trial_data_list.head())
     print(trial_data_list.shape)
     return(trial_data_list)
 
-def clean_subject_data_files(subject_dirs):
+def clean_subject_data_files(subject_dirs): #Uses the above methods to actually move and change the data. Creates the new_co files
     subjects = list()
     trial_files_data = list()
     for subject_dir in subject_dirs:
@@ -131,7 +134,7 @@ def clean_subject_data_files(subject_dirs):
     #all samples are the exact same length, so we have it easy here
     print(pd.Series(len_trial_files_data).describe())
 
-def create_targets_file(subject_dirs):
+def create_targets_file(subject_dirs): #For every new file created, you are reading the 4th character of the file and making it binary. Control = 0, Alcohol = 1
     targets=list()
     for subject_dir in subject_dirs:
         print(subject_dir)
@@ -152,11 +155,11 @@ def create_targets_file(subject_dirs):
         print("added", fn)
         my_df.to_csv(fn, header=['#sequence_ID', 'class_label'], index=False, lineterminator='\n')
 
-def create_groups_file(subject_dirs):
+def create_groups_file(subject_dirs): #Creates an A and C list, goes through each subject folder, and determined alchohol or control
     targets = list()
     a = list()
     c = list()
-    for subject_dir in subject_dirs:
+    for subject_dir in subject_dirs: #Sorts into a then c   
         print(subject_dir)
         trial_files = pathlib.Path(subject_dir).glob("new*")
         a_or_c = os.path.basename(subject_dir)[3]
@@ -164,7 +167,7 @@ def create_groups_file(subject_dirs):
             a.append(subject_dir)
         else:
             c.append(subject_dir)
-
+    #1 = train, 2 = validation, 3 = test
     subjects = a + c
     count=1
     for subject_dir in subjects:
@@ -260,13 +263,13 @@ for i in test_raw.index:
     values = df.values
     test.append(values)
 
-train=np.array(train).round(5)
-validation=np.array(validation).round(5)
-test=np.array(test).round(5)
-np.set_printoptions(suppress=True)
-print('\n\nTRAIN SET:\n', train)
-print('\n\nVALIDATION SET:\n', validation)
-print('\n\nTEST SET:\n', test)
+# train=np.array(train).round(5)
+# validation=np.array(validation).round(5)
+# test=np.array(test).round(5)
+# np.set_printoptions(suppress=True)
+# print('\n\nTRAIN SET:\n', train)
+# print('\n\nVALIDATION SET:\n', validation)
+# print('\n\nTEST SET:\n', test)
 
 
 #===========================================================================================#
@@ -278,9 +281,10 @@ groupsInfo = pd.read_csv(groupsFile)
 mergedInfo = pd.merge(targetsInfo, groupsInfo, on='#sequence_ID', how='outer')
 print(mergedInfo)
 
-raw_train_target = mergedInfo.loc[mergedInfo['dataset_ID']==1]
-raw_validation_target = mergedInfo.loc[mergedInfo['dataset_ID']==2]
-raw_test_target = mergedInfo.loc[mergedInfo['dataset_ID']==3]
+# within each group is a binary indicator as to whether or not the patient was alcohol(1)/control(0)
+raw_train_target = mergedInfo.loc[mergedInfo['dataset_ID']==1] # group 1 = training set
+raw_validation_target = mergedInfo.loc[mergedInfo['dataset_ID']==2] # group  2 = validtion set
+raw_test_target = mergedInfo.loc[mergedInfo['dataset_ID']==3] # group 3 = test set 
 
 train_target = raw_train_target['class_label']
 validation_target = raw_validation_target['class_label']
