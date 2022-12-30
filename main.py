@@ -35,9 +35,9 @@ processed_data_dir = os.path.join(full_data_dir, processing_dir) #Creating a new
 
 #Important for Machine Learning, specifes paramaters
 #channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ', 'FT7', 'FT8', 'FZ','O1','O2','OZ','POZ','PZ','PO1','PO2','PO7','PO8', 'S1', 'T7','T8','TP7','TP8'] + [f'F{n:01}' for n in range(1,9)] + [f'C{n:01}' for n in range(1,8)] + [f'CP{n:01}' for n in range(1,7)] + [f'F{n:01}' for n in range(1,6)]  + [f'FC{n:01}' for n in range(1,7)] + [f'P{n:01}' for n in range(1,9)]
-channels = ['FP1','FP2','F7','F8','AF1','AF2','FZ','F4','F3','FC6','FC5','FC2','FC1','T8','T7','CZ','C3','C4','CP5','CP6','CP1','CP2','P3','P4','PZ','P8','P7','PO2','PO1','O2','O1','AF7','AF8','F5','F6','FT7','FT8','FPZ','FC4','FC3','C6','C5','F2','F1','TP8','TP7','AFZ','CP3','CP4','P5','P6','C1','C2','PO7','PO8','FCZ','POZ','OZ','P2','P1','CPZ',]   #excluding 'nd','Y','X'
+channels = ['FP1','FP2','F7','F8','AF1','AF2','FZ','F4','F3','FC6','FC5','FC2','FC1','T8','T7','CZ','C3','C4','CP5','CP6','CP1','CP2','P3','P4','PZ','P8','P7','PO2','PO1','O2','O1','AF7','AF8','F5','F6','FT7','FT8','FPZ','FC4','FC3','C6','C5','F2','F1','TP8','TP7','AFZ','CP3','CP4','P5','P6','C1','C2','PO7','PO8','FCZ','POZ','OZ','P2','P1','CPZ']   #excluding 'nd','Y','X'
 
-#num_channels = 61
+#num_channels = 64
 num_channels = 61
 num_samples = 256
 
@@ -220,9 +220,9 @@ def create_groups_file(subject_dirs): #Creates an A and C list, goes through eac
 #READ IN DATA AND SEPARATE IT BASED ON GROUP INTO TRAIN, VALIDATION, AND TEST SETS
 #===========================================================================================#
 
-#datasetgroup_file =  os.path.join(processed_data_dir,'DataSetGroup.csv')
+#groupsFile =  os.path.join(processed_data_dir,'groups.csv')
 groupsFile =  os.path.join(processed_data_dir,'minigroups.csv')
-#targets_file = os.path.join(processed_data_dir,'targets.csv')
+#targetsFile = os.path.join(processed_data_dir,'targets.csv')
 targetsFile = os.path.join(processed_data_dir,'minitargets.csv')
 trials = pd.read_csv(groupsFile)
 
@@ -264,13 +264,13 @@ for i in test_raw.index:
     values = df.values
     test.append(values)
 
-# train=np.array(train).round(5)
-# validation=np.array(validation).round(5)
-# test=np.array(test).round(5)
-# np.set_printoptions(suppress=True)
-# print('\n\nTRAIN SET:\n', train)
-# print('\n\nVALIDATION SET:\n', validation)
-# print('\n\nTEST SET:\n', test)
+train=np.array(train).round(5)
+validation=np.array(validation).round(5)
+test=np.array(test).round(5)
+np.set_printoptions(suppress=True)
+print('\n\nTRAIN SET:\n', train)
+print('\n\nVALIDATION SET:\n', validation)
+print('\n\nTEST SET:\n', test)
 
 
 #===========================================================================================#
