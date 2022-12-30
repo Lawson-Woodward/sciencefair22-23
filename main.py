@@ -33,18 +33,12 @@ full_data_dir = 'C:/eeg/sciencefair22-23/data/eeg_full/'
 processing_dir = 'processed'
 processed_data_dir = os.path.join(full_data_dir, processing_dir) #Creating a new file path called, C:/eeg/sciencefair22-23/data/eeg_full/processed
 
-<<<<<<< HEAD
-#we need to check these channel names still
-channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ', 'FT7', 'FT8', 'FZ','O1','O2','OZ','POZ','PZ','PO1','PO2','PO7','PO8', 'S1', 'T7','T8','TP7','TP8'] + [f'F{n:01}' for n in range(1,9)] + [f'C{n:01}' for n in range(1,8)] + [f'CP{n:01}' for n in range(1,7)] + [f'F{n:01}' for n in range(1,6)]  + [f'FC{n:01}' for n in range(1,7)] + [f'P{n:01}' for n in range(1,9)]
+#Important for Machine Learning, specifes paramaters
+#channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ', 'FT7', 'FT8', 'FZ','O1','O2','OZ','POZ','PZ','PO1','PO2','PO7','PO8', 'S1', 'T7','T8','TP7','TP8'] + [f'F{n:01}' for n in range(1,9)] + [f'C{n:01}' for n in range(1,8)] + [f'CP{n:01}' for n in range(1,7)] + [f'F{n:01}' for n in range(1,6)]  + [f'FC{n:01}' for n in range(1,7)] + [f'P{n:01}' for n in range(1,9)]
 channels = ['FP1','FP2','F7','F8','AF1','AF2','FZ','F4','F3','FC6','FC5','FC2','FC1','T8','T7','CZ','C3','C4','CP5','CP6','CP1','CP2','P3','P4','PZ','P8','P7','PO2','PO1','O2','O1','AF7','AF8','F5','F6','FT7','FT8','FPZ','FC4','FC3','C6','C5','F2','F1','TP8','TP7','AFZ','CP3','CP4','P5','P6','C1','C2','PO7','PO8','FCZ','POZ','OZ','P2','P1','CPZ',]   #excluding 'nd','Y','X'
 
+#num_channels = 61
 num_channels = 61
-=======
-
-channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ', 'FT7', 'FT8', 'FZ','O1','O2','OZ','POZ','PZ','PO1','PO2','PO7','PO8', 'S1', 'T7','T8','TP7','TP8'] + [f'F{n:01}' for n in range(1,9)] + [f'C{n:01}' for n in range(1,8)] + [f'CP{n:01}' for n in range(1,7)] + [f'F{n:01}' for n in range(1,6)]  + [f'FC{n:01}' for n in range(1,7)] + [f'P{n:01}' for n in range(1,9)] 
-
-num_channels = 68 #Important for Machine Learning, specifes paramaters
->>>>>>> e2546a6e36d7d4c855330e38f29caa59748f055c
 num_samples = 256
 
 subject_dirs = pathlib.Path("C:\eeg\sciencefair22-23\data\eeg_full\processed").glob("co*") #Finding all files that starts with co
