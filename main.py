@@ -36,8 +36,9 @@ processed_data_dir = os.path.join(full_data_dir, processing_dir)
 
 #we need to check these channel names still
 channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ', 'FT7', 'FT8', 'FZ','O1','O2','OZ','POZ','PZ','PO1','PO2','PO7','PO8', 'S1', 'T7','T8','TP7','TP8'] + [f'F{n:01}' for n in range(1,9)] + [f'C{n:01}' for n in range(1,8)] + [f'CP{n:01}' for n in range(1,7)] + [f'F{n:01}' for n in range(1,6)]  + [f'FC{n:01}' for n in range(1,7)] + [f'P{n:01}' for n in range(1,9)]
+channels = ['FP1','FP2','F7','F8','AF1','AF2','FZ','F4','F3','FC6','FC5','FC2','FC1','T8','T7','CZ','C3','C4','CP5','CP6','CP1','CP2','P3','P4','PZ','P8','P7','PO2','PO1','O2','O1','AF7','AF8','F5','F6','FT7','FT8','FPZ','FC4','FC3','C6','C5','F2','F1','TP8','TP7','AFZ','CP3','CP4','P5','P6','C1','C2','PO7','PO8','FCZ','POZ','OZ','P2','P1','CPZ',]   #excluding 'nd','Y','X'
 
-num_channels = 68
+num_channels = 61
 num_samples = 256
 
 subject_dirs = pathlib.Path("C:\eeg\sciencefair22-23\data\eeg_full\processed").glob("co*")
@@ -203,7 +204,7 @@ def create_groups_file(subject_dirs):
 #read_trial_file("C:/eeg/sciencefair22-23/data/eeg_full/processed/co2a0000364/new_co2a0000364.rd.000")
 
   #creates a cleaned up version of every single trial file in the subject files provided
-#clean_subject_data_files(subject_dirs)
+clean_subject_data_files(subject_dirs)
 
   #creates the file that labels all subjects as a/c
 #create_groups_file(subject_dirs)
@@ -298,4 +299,51 @@ print(train_target)
 print(validation_target)
 print(test_target)
 
+
+#===========================================================================================#
+#BUILD A TIME SERIES CLASSIFICATION MODEL AND A SINGLE LAYER LSTM MODEL
+#===========================================================================================#
+
+best_model_pkl = os.path.join(processed_data_dir, 'best_model.pkl')
+
+model = Sequential()
+model.add(LSTM(256, input_shape=(num_samples, num_channels)))
+model.add(Dense(1, activation='sigmoid'))
+print("*** Model Summary *** ")
+print(model.summary())
+
+adam = Adam(learning_rate=0.001)
+chk = ModelCheckpoint(best_model_pkl, monitor='val_accuracy', save_best_only=True, mode='max', verbose=1)
+
+model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
+
+history = model.fit(train, train_target, epochs=10, batch_size=128, callbacks=[chk], validation_data=(validation,validation_target))
+#model.fit(train, train_target, epochs=200, batch_size=128, callbacks=[chk], validation_data=(validation,validation_target))
+### 12/27 model.fit(train, train_target, epochs=1, batch_size=1, callbacks=[chk], validation_data=(validation,validation_target))
+ 
+# summarize data for accuracy
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+ 
+#summarize history for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
+model = load_model(best_model_pkl)
+
+from sklearn.metrics import accuracy_score
+test_preds = (model.predict(test) > 0.5).astype("int32")
+print("Accuracy Score: ", accuracy_score(test_target, test_preds))
+ 
+exit()
 
