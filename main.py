@@ -135,28 +135,7 @@ def clean_subject_data_files(subject_dirs): #Uses the above methods to actually 
     #all samples are the exact same length, so we have it easy here
     print(pd.Series(len_trial_files_data).describe())
 
-def create_targets_file(subject_dirs): #For every new file created, you are reading the 4th character of the file and making it binary. Control = 0, Alcohol = 1
-    targets=list()
-    for subject_dir in subject_dirs:
-        print(subject_dir)
-        trial_files = pathlib.Path(subject_dir).glob("new*")
-        a_or_c = os.path.basename(subject_dir)[3]
-        if a_or_c == "a":
-            a_or_c = "1"
-        else:
-            a_or_c = "0"
-        print("subject is", a_or_c)
-        for trial_file in trial_files:
-            fn = os.path.basename(trial_file)
-            x = [fn, a_or_c]
-            print(x)
-            targets.append(x)
-        my_df = pd.DataFrame(targets)
-        fn = os.path.join(processed_data_dir, 'targets.csv')
-        print("added", fn)
-        my_df.to_csv(fn, header=['#sequence_ID', 'class_label'], index=False, lineterminator='\n')
-
-def create_groups_file(subject_dirs): #Creates an A and C list, goes through each subject folder, and determined alchohol or control
+def create_groups_and_targets_file(subject_dirs): #Creates an A and C list, goes through each subject folder, and determined alchohol or control
     targets = list()
     a = list()
     c = list()
@@ -185,6 +164,25 @@ def create_groups_file(subject_dirs): #Creates an A and C list, goes through eac
         if count == 3:
             count = 0
         count += 1
+    targets=list()
+    for subject_dir in subjects:
+        print(subject_dir)
+        trial_files = pathlib.Path(subject_dir).glob("new*")
+        a_or_c = os.path.basename(subject_dir)[3]
+        if a_or_c == "a":
+            a_or_c = "1"
+        else:
+            a_or_c = "0"
+        print("subject is", a_or_c)
+        for trial_file in trial_files:
+            fn = os.path.basename(trial_file)
+            x = [fn, a_or_c]
+            print(x)
+            targets.append(x)
+        my_df = pd.DataFrame(targets)
+        fn = os.path.join(processed_data_dir, 'targets.csv')
+        print("added", fn)
+        my_df.to_csv(fn, header=['#sequence_ID', 'class_label'], index=False, lineterminator='\n')
 
 
 #===========================================================================================#
@@ -209,11 +207,9 @@ def create_groups_file(subject_dirs): #Creates an A and C list, goes through eac
   #creates a cleaned up version of every single trial file in the subject files provided
 #clean_subject_data_files(subject_dirs)
 
-  #creates the file that labels all subjects as a/c
-#create_groups_file(subject_dirs)
-
+  #creates the file that labels all subjects as a/c and
   #creates the file that equally distributes the a/c files among 3 groups
-#create_targets_file(subject_dirs)
+#create_groups_and_targets_file(subject_dirs)
 
 
 #===========================================================================================#
@@ -321,7 +317,7 @@ chk = ModelCheckpoint(best_model_pkl, monitor='val_accuracy', save_best_only=Tru
 
 model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
 
-history = model.fit(train, train_target, epochs=10, batch_size=128, callbacks=[chk], validation_data=(validation,validation_target))
+history = model.fit(train, train_target, epochs=519, batch_size=128, callbacks=[chk], validation_data=(validation,validation_target))
 #model.fit(train, train_target, epochs=200, batch_size=128, callbacks=[chk], validation_data=(validation,validation_target))
 ### 12/27 model.fit(train, train_target, epochs=1, batch_size=1, callbacks=[chk], validation_data=(validation,validation_target))
  
@@ -350,4 +346,3 @@ test_preds = (model.predict(test) > 0.5).astype("int32")
 print("Accuracy Score: ", accuracy_score(test_target, test_preds))
  
 exit()
-
