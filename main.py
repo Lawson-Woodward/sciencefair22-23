@@ -1,6 +1,7 @@
 #===========================================================================================#
 #IMPORTING VARIOUS LIBRARIES
 #===========================================================================================#
+
 import pandas as pd
 import os
 import pathlib  #Deals with paths like OS
@@ -13,72 +14,67 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score
 from datetime import datetime
 from keras.utils.vis_utils import plot_model
- 
+
 from keras.preprocessing import sequence
 import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.layers import LSTM
 import sys
- 
+
 from keras.optimizers import Adam
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint
- 
+
 np.set_printoptions(threshold=sys.maxsize)
- 
+
 #===========================================================================================#
 #DEFINING IMPORTANT VARIABLES
 #===========================================================================================#
- 
-do_initial_extraction = 0 # Only need to use this once to extract the original data
-process_raw_data = 0 # Only need to use this when you change the selected data (s1 obj, s2 match, s2 nomatch)
+
+do_initial_extraction = 0 #Only need to use this once to extract the original data
+process_raw_data = 0      #Only need to use this when you change the selected data (s1 obj, s2 match, s2 nomatch)
  
 full_data_dir = 'C:/eeg/sciencefair22-23/data/eeg_full/'  
  
-processing_dir = 'processed' #manually clean up the new_ files in this dir by searching for name:new_* and dleteing
+processing_dir = 'processed' #manually clean up the new_ files in this dir by searching for name:new_* and deleting
 processed_data_dir = os.path.join(full_data_dir, processing_dir) #Creating a new file path called, C:/eeg/sciencefair22-23/data/eeg_full/processed
 groupsFile =  os.path.join(processed_data_dir,'groups.csv')
 trial_files_descriptions = os.path.join(processed_data_dir, 'trial_files_descriptions.csv')
 targetsFile = os.path.join(processed_data_dir,'targets.csv')
 experimental_dir = os.path.join(full_data_dir, 'experiments/')
- 
-#now = datetime.now()
-#timestamp = now.strftime("%Y%m%d%H%M")
-#best_model_pkl = os.path.join(experimental_dir, timestamp+'_'+'best_model.pkl')
- 
+
 #Important for Machine Learning, specifes paramaters
-#channels = ['FP1', 'FP2', 'FPZ']
 channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ', 'FT7', 'FT8', 'FZ','O1','O2','OZ','POZ','PZ','PO1','PO2','PO7','PO8', 'T7','T8','TP7','TP8'] + [f'F{n:01}' for n in range(1,9)] + [f'C{n:01}' for n in range(1,7)] + [f'CP{n:01}' for n in range(1,7)] + [f'FC{n:01}' for n in range(1,7)] + [f'P{n:01}' for n in range(1,9)]
- 
+
 num_channels = len(channels)
 num_samples = 256
- 
-#subject_dirs = pathlib.Path("C:\eeg\sciencefair22-23\data\eeg_full\processed").glob("co*") #Finding all files that starts with co
+
 subject_dirs=list(pathlib.Path(processed_data_dir).glob("co*")) #Finding all files that starts with co
- 
+
 # Experimental Values
-datasubset='S' # S is for all, 'S1 obj', 'S2 match' or 'S2 nomatch'
-lr=.0005
-lstm_units=20
-epochs= 10
-batch_size=256
+datasubset='S' #'S' is for all, 'S1 obj', 'S2 match' or 'S2 nomatch' are specific stimuli
+
+lr=[.0005]     # you can turn any of the following 4 values into a list of values, and then
+lstm_units=256 # change the for statement on line 292 to run though all of the values for the
+epochs= 20     # specific variable you want to change. It runs through all values of the list
+batch_size=256 # in one run and outputs them to an 'experiments' folder
  
-n_train = .6 # percent of data to use for training
+n_train = .6   #percent of data to use for training and validation
 n_validate = .2
  
 #===========================================================================================#
 #WRITING FUNCTIONS THAT WE WILL LATER CALL
 #===========================================================================================#
  
-def create_data_processing_dir(processed_data_dir): #If no folder named processing, it creates one to store in the processed data later
+def create_data_processing_dir(processed_data_dir): #If no folder named processing, creates one to store the later processed data
     try:
         os.makedirs(processed_data_dir, exist_ok = True)
         print ("Target dir '%s' for processed data successfully created" % processed_data_dir)
     except OSError as error:
         print ("Directory '%s' cannot be created" % processed_data_dir)
  
-def create_experimental_dir(experimental_dir): #If no folder named processing, it creates one to store in the processed data later
+def create_experimental_dir(experimental_dir): #If no folder named experiments, it creates one to store in the processed data later
     try:
         os.makedirs(experimental_dir, exist_ok = True)
         print ("Target dir '%s' for processed data successfully created" % experimental_dir)
@@ -95,7 +91,7 @@ def extract_subjects_to_dir(full_data_dir, processed_data_dir): #For every singl
         subject.extractall(processed_data_dir)
         subject.close()
  
-#processed dir > patients (co) > # of trials > list of electrodes
+#processed dir > patients (co) > # of trials > list of electrodes <----- for size reference
 def extract_files_to_subject(processed_data_dir, file): #Uncompresses which removes the gz file extension, is called in a for loop
     print ("extracting files to subject")
     subject_dir = os.path.join(processed_data_dir, os.path.basename(file)).replace(".tar.gz", "")
@@ -123,15 +119,13 @@ def create_clean_data_file(filename, ch_names, create_file,datasubset):
         content = f.readlines()
         if (datasubset in content[3]):
             create_file=1
-            #for line in f:
             for line in content:
                 newline = line.split()
-                # Remove unknown channels. We were unable to determine what nd and Y stood for
-                # since they are nonstandard channels.
+                # Remove unknown channels. We were unable to determine what nd, X, and
+                # Y stood for since they are nonstandard channels.
                 # We also need to exclude comments.
                 if (newline[1] in ch_names and newline[0] != "#"):
                     index = ch_names.index(newline[1])
-                    # print (index)
                     # load the data into the np array
                     data_array[int(newline[2]), int(index)] = newline[3]
         else:
@@ -149,7 +143,7 @@ def create_clean_data_file(filename, ch_names, create_file,datasubset):
         # This is our loaded data, transformed into an np array of channels rows x samples columns
         return newname
  
-def read_trial_file(trial_file): #Getting the data
+def read_trial_file(trial_file): # Getting the data
     trial_data_list = pd.read_csv(trial_file, sep='\s+', comment='#', header=0)
     return(trial_data_list)
  
@@ -186,7 +180,6 @@ def map_files_to_stype_and_aorc(subject_dirs):
                 a_or_c = "1"
             else:
                 a_or_c = "0"
-            #trial_files.append(base_fn+','+a_or_c)
             orig_file = str(trial_file).replace('new_','')
             with open(orig_file) as f:
                 content = f.readlines()
@@ -211,7 +204,6 @@ def create_groups_and_targets_file(trial_files_descriptions, datasubset):
    
     # this code gets two pds with equal number of 0 and 1 by removing extras.
     # It randomizes the lists before removing extras, so the same subset of data isn't chosen repeatedly.
- 
     c_tfd = tfd.loc[tfd['class_label'] == 0]
     a_tfd = tfd.loc[tfd['class_label'] == 1]
     a_tfd = a_tfd.sample(frac = 1)
@@ -225,7 +217,6 @@ def create_groups_and_targets_file(trial_files_descriptions, datasubset):
         c_tfd = c_tfd.iloc[:a_rows]
    
     #### You need to split these into 60/20/20 PDs and then combine the PDs.
- 
     train_rows=int(n_train*c_tfd.shape[0])
     a_tfd_train=a_tfd.iloc[:train_rows]
     val_rows=int(n_validate*c_tfd.shape[0])
@@ -245,7 +236,6 @@ def create_groups_and_targets_file(trial_files_descriptions, datasubset):
     tfd_test=pd.concat(data)
  
     #randomize again, so we don't have all 1's and all 0's clumped together after the concat
-   
     tfd_train = tfd_train.sample(frac = 1)
     tfd_train['dataset_ID'] = '1'
     tfd_val = tfd_val.sample(frac = 1)
@@ -292,9 +282,11 @@ if process_raw_data == 1:
     clean_subject_data_files(subject_dirs,datasubset)
     map_files_to_stype_and_aorc(subject_dirs)
  
+# UNCOMMENT LINE 287 for the FIRST TIME that you create the new subject files...
+# also COMMENT THE LINE OUT after the first run:
 #create_groups_and_targets_file(trial_files_descriptions, datasubset)
-lrs=[lr]
-for mylr in [lrs]:
+ 
+for lr in (lr):
     print ("lr is", lr)
     now = datetime.now()
     timestamp = now.strftime("%Y%m%d%H%M%S")
@@ -397,12 +389,11 @@ for mylr in [lrs]:
  
    
     model = Sequential()
-    model.add(LSTM(lstm_units, input_shape=(num_samples, num_channels), return_sequences=True))
-    model.add(Dense(1,activation="relu"))
-    model.add(Dropout(.4))
     model.add(LSTM(lstm_units, input_shape=(num_samples, num_channels)))
-    model.add(Dense(1,activation="relu"))
-    model.add(Dense(1, activation = 'sigmoid'))
+ 
+    model.add(Dropout(0.5))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dense(1, activation="sigmoid"))
    
     adam = Adam(learning_rate=lr)
     chk = ModelCheckpoint(best_model_pkl, monitor='val_accuracy', save_best_only=True, mode='max', verbose=1)
@@ -410,9 +401,6 @@ for mylr in [lrs]:
     model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
    
     history = model.fit(train, train_target, epochs=epochs, batch_size=batch_size, callbacks=[chk], validation_data=(validation,validation_target))
-    #model.fit(train, train_target, epochs=200, batch_size=128, callbacks=[chk], validation_data=(validation,validation_target))
-    ### 12/27 model.fit(train, train_target, epochs=1, batch_size=1, callbacks=[chk], validation_data=(validation,validation_target))
- 
     print("*** Model Summary ***")
  
     def printsummary(s):
@@ -434,7 +422,8 @@ for mylr in [lrs]:
     model_file = os.path.join(experimental_dir, timestamp + '_model_plot_1' + '.png')
     plt.savefig(model_file)
     plt.close()
-    #plt.show()
+    #plt.show()    # this opens a popup of the accuracy if you wish to see it, but
+                   # it is also stored in the experiments folder
  
     #summarize history for loss
     plt.plot(history.history['loss'])
@@ -446,18 +435,17 @@ for mylr in [lrs]:
     model_file = os.path.join(experimental_dir, timestamp + '_model_plot_2' + '.png')
     plt.savefig(model_file)
     plt.close()
-    #plt.show()
+    #plt.show()    # this opens a popup of the loss if you wish to see it, but
+                   # it is also stored in the experiments folder
  
-    #model = load_model(best_model_pkl)
     print("length of test is", len(test))
     test_preds = (model.predict(test) > 0.5).astype("int32")
     print("length of test_preds is", len(test_preds))
  
-    accuracy= accuracy_score(test_target, test_preds) ####### confirm this is correct
+    accuracy= accuracy_score(test_target, test_preds)
     print("Accuracy Score: ", accuracy)
  
     ### Save the results to the experiment directory for future reference
- 
     modeldiagram_file = os.path.join(experimental_dir, timestamp + '_model_plot' +'.png')
     backup_groupsFile = os.path.join(experimental_dir, timestamp + os.path.basename(groupsFile))
     backup_targetsFile = os.path.join(experimental_dir, timestamp + os.path.basename(targetsFile))
