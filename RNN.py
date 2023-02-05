@@ -460,5 +460,5 @@ for lr in (lr):
     logline=str(timestamp)+', '+str(accuracy)+', '+datasubset+', '+spacedchannels+', '+str(lr)+', '+str(lstm_units)+', '+str(epochs)+', '+str(batch_size)+'\n'
     experimentdata_fn.writelines(logline)
     experimentdata_fn.close()
- 
+
 exit()
