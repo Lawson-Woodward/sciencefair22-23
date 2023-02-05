@@ -42,7 +42,7 @@ processed_data_dir = os.path.join(full_data_dir, processing_dir) #Creating a new
 groupsFile =  os.path.join(processed_data_dir,'groups.csv')
 trial_files_descriptions = os.path.join(processed_data_dir, 'trial_files_descriptions.csv')
 targetsFile = os.path.join(processed_data_dir,'targets.csv')
-experimental_dir = os.path.join(full_data_dir, 'experiments/')
+experimental_dir = os.path.join(full_data_dir, 'experiments/experiment11/')
 
 #Important for Machine Learning, specifes paramaters
 channels = ['AF1', 'AF2','AF7','AF8','AFZ','FP1', 'FP2', 'CPZ', 'CZ', 'FCZ','FPZ', 'FT7', 'FT8', 'FZ','O1','O2','OZ','POZ','PZ','PO1','PO2','PO7','PO8', 'T7','T8','TP7','TP8'] + [f'F{n:01}' for n in range(1,9)] + [f'C{n:01}' for n in range(1,7)] + [f'CP{n:01}' for n in range(1,7)] + [f'FC{n:01}' for n in range(1,7)] + [f'P{n:01}' for n in range(1,9)]
@@ -55,13 +55,13 @@ subject_dirs=list(pathlib.Path(processed_data_dir).glob("co*")) #Finding all fil
 # Experimental Values
 datasubset='S' #'S' is for all, 'S1 obj', 'S2 match' or 'S2 nomatch' are specific stimuli
 
-lr=[.0005]     # you can turn any of the following 4 values into a list of values, and then
+lr=.001     # you can turn any of the following 4 values into a list of values, and then
 lstm_units=256 # change the for statement on line 292 to run though all of the values for the
-epochs= 20     # specific variable you want to change. It runs through all values of the list
-batch_size=256 # in one run and outputs them to an 'experiments' folder
+epochslist=[50]     # specific variable you want to change. It runs through all values of the list
+batch_size=32 # in one run and outputs them to an 'experiments' folder
  
-n_train = .6   #percent of data to use for training and validation
-n_validate = .2
+n_train = .8   #percent of data to use for training and validation
+n_validate = .1
  
 #===========================================================================================#
 #WRITING FUNCTIONS THAT WE WILL LATER CALL
@@ -284,10 +284,10 @@ if process_raw_data == 1:
  
 # UNCOMMENT LINE 287 for the FIRST TIME that you create the new subject files...
 # also COMMENT THE LINE OUT after the first run:
-#create_groups_and_targets_file(trial_files_descriptions, datasubset)
+# create_groups_and_targets_file(trial_files_descriptions, datasubset)
  
-for lr in (lr):
-    print ("lr is", lr)
+for epochs in (epochslist):
+    print ("LSTM units amount is", epochs)
     now = datetime.now()
     timestamp = now.strftime("%Y%m%d%H%M%S")
     print("timestamp is", timestamp)
@@ -390,9 +390,9 @@ for lr in (lr):
    
     model = Sequential()
     model.add(LSTM(lstm_units, input_shape=(num_samples, num_channels)))
- 
+
     model.add(Dropout(0.5))
-    model.add(Dense(32, activation='relu'))
+    model.add(Dense(100, activation="relu"))
     model.add(Dense(1, activation="sigmoid"))
    
     adam = Adam(learning_rate=lr)
