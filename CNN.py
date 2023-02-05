@@ -16,10 +16,11 @@ from datetime import datetime
 from keras.utils.vis_utils import plot_model
 
 from keras.preprocessing import sequence
+from keras import regularizers
 import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
-from keras.layers import LSTM
+from keras.layers import LSTM, Activation, Flatten, Conv2D, Conv1D, LeakyReLU, MaxPooling2D, MaxPooling1D, Input, InputLayer, Reshape, GlobalMaxPooling2D, GlobalMaxPooling1D
 import sys
 
 from keras.optimizers import Adam
@@ -35,7 +36,7 @@ np.set_printoptions(threshold=sys.maxsize)
 do_initial_extraction = 0 #Only need to use this once to extract the original data
 process_raw_data = 0      #Only need to use this when you change the selected data (s1 obj, s2 match, s2 nomatch)
  
-full_data_dir = 'C:/eeg/sciencefair22-23/data/eeg_full/'  
+full_data_dir = 'C:/eeg/sciencefair22-23/data1/eeg_full/'  
  
 processing_dir = 'processed' #manually clean up the new_ files in this dir by searching for name:new_* and deleting
 processed_data_dir = os.path.join(full_data_dir, processing_dir) #Creating a new file path called, C:/eeg/sciencefair22-23/data/eeg_full/processed
@@ -55,10 +56,10 @@ subject_dirs=list(pathlib.Path(processed_data_dir).glob("co*")) #Finding all fil
 # Experimental Values
 datasubset='S' #'S' is for all, 'S1 obj', 'S2 match' or 'S2 nomatch' are specific stimuli
 
-lr=[.0005]     # you can turn any of the following 4 values into a list of values, and then
-lstm_units=256 # change the for statement on line 292 to run though all of the values for the
-epochs= 20     # specific variable you want to change. It runs through all values of the list
-batch_size=256 # in one run and outputs them to an 'experiments' folder
+lr=[.0005]#[.0005]     # you can turn any of the following 4 values into a list of values, and then
+lstm_units= 128 #256 # change the for statement on line 292 to run though all of the values for the
+epochs=150 #80 #20     # specific variable you want to change. It runs through all values of the list
+batch_size=32 # in one run and outputs them to an 'experiments' folder
  
 n_train = .6   #percent of data to use for training and validation
 n_validate = .2
@@ -388,19 +389,133 @@ for lr in (lr):
     #===========================================================================================#
  
    
-    model = Sequential()
-    model.add(LSTM(lstm_units, input_shape=(num_samples, num_channels)))
+    # model = Sequential()
+    # model.add(Conv1D(filters=32,kernel_size=15, activation='relu', padding='same', name='conv_1', #relu
+    #              input_shape=(num_samples, num_channels),kernel_regularizer=regularizers.l2(0.0095)))
+    # model.add(MaxPooling1D(pool_size=2, name='maxpool_1'))
+    # model.add(Conv1D(filters=64,kernel_size=15, activation='relu', padding='same', name='conv_2',kernel_regularizer=regularizers.l2(0.0095))) #relu
+    # model.add(MaxPooling1D(pool_size=2, name='maxpool_2'))
+    # model.add(Dropout(0.65)) 
+
+    # #model.add(Conv2D(64, (3, 3), activation='tanh', padding='same', name='conv_extra')) #tanh
+    # #model.add(MaxPooling2D((2, 2), name='maxpool_extra'))
+
+    # model.add(Conv1D(filters=128,kernel_size=15, activation='tanh', padding='same', name='conv_3',kernel_regularizer=regularizers.l2(0.0095))) #tanh
+    # model.add(MaxPooling1D(pool_size=2, name='maxpool_3'))
+    # model.add(Conv1D(filters=128,kernel_size=15, activation='relu', padding='same', name='conv_4')) #relu
+    # model.add(MaxPooling1D(pool_size=2, name='maxpool_4'))
+    # #model.add(GlobalMaxPooling1D(name='maxpool_5'))
+
+
+    
+    # model.add(Flatten())
+
+    # # model.add(Reshape((16,384)))
+    # # #model.add(Reshape((48,128)))
+
+    # # model.add(LSTM(128, return_sequences=True)) 
+    # # model.add(Dropout(0.65))
+    # # #model.add(Dense(64, activation='tanh'))
+    # # model.add(LSTM(32))
+    # #model.add(Flatten())
+
+    # model.add(Dropout(0.65)) 
+    # model.add(Dense(64, activation='relu', name='dense_1',kernel_regularizer=regularizers.l2(0.0095)))
+    # model.add(Dense(32, activation='relu', name='dense_2',kernel_regularizer=regularizers.l2(0.0095)))
+    # model.add(Dense(1, activation='sigmoid', name='output',kernel_regularizer=regularizers.l2(0.0095))) ##0.6, 0.009
+
+
+
+
+
+
+    # model = Sequential()
+    # model.add(LSTM(lstm_units, input_shape=(num_samples, num_channels)))
  
-    model.add(Dropout(0.5))
-    model.add(Dense(32, activation='relu'))
-    model.add(Dense(1, activation="sigmoid"))
+    # model.add(Dropout(0.5))
+    # model.add(Dense(32, activation='relu'))
+    # model.add(Dense(1, activation="sigmoid"))
+
+    model = Sequential()
+    model.add(Conv2D(32, (3, 3), activation='tanh', padding='same', name='conv_1', #relu
+                 input_shape=(num_samples, num_channels, 1),kernel_regularizer=regularizers.l2(0.0095)))
+    model.add(MaxPooling2D((2, 2), name='maxpool_1'))
+    model.add(Conv2D(128, (3, 3), activation='relu', padding='same', name='conv_2',kernel_regularizer=regularizers.l2(0.0095))) #relu
+    model.add(MaxPooling2D((2, 2), name='maxpool_2'))
+    model.add(Dropout(0.5)) 
+
+    model.add(Conv2D(128, (3, 3), activation='tanh', padding='same', name='conv_extra')) #tanh
+    model.add(MaxPooling2D((2, 2), name='maxpool_extra'))
+
+    model.add(Conv2D(256, (3, 3), activation='relu', padding='same', name='conv_3',kernel_regularizer=regularizers.l2(0.0095))) #tanh
+    model.add(MaxPooling2D((2, 2), name='maxpool_3'))
+    model.add(Conv2D(256, (3, 3), activation='tanh', padding='same', name='conv_4')) #relu
+    model.add(MaxPooling2D((2, 2), name='maxpool_4'))
+
+    model.add(Conv2D(32, (3, 3), activation='relu', padding='same', name='conv_5',kernel_regularizer=regularizers.l2(0.0095))) #tanh
+    model.add(MaxPooling2D((2, 2), name='maxpool_5', padding = 'same'))
+    model.add(Conv2D(32, (3, 3), activation='tanh', padding='same', name='conv_6')) #relu ##64
+    model.add(MaxPooling2D((2, 2), name='maxpool_6', padding= 'same'))
+    #model.add(GlobalMaxPooling2D())
+    
+    #model.add(Flatten())
+
+    # model.add(Reshape((16,384)))
+    # #model.add(Reshape((48,128)))
+
+    # model.add(LSTM(128, return_sequences=True)) 
+    # model.add(Dropout(0.65))
+    # #model.add(Dense(64, activation='tanh'))
+    # model.add(LSTM(32))
+    model.add(Flatten())
+
+    model.add(Dropout(0.5)) 
+    model.add(Dense(128, activation='relu', name='dense_1',kernel_regularizer=regularizers.l2(0.0095)))
+    model.add(Dense(64, activation='relu', name='dense_2',kernel_regularizer=regularizers.l2(0.0095)))
+    model.add(Dense(1, activation='sigmoid', name='output',kernel_regularizer=regularizers.l2(0.0095))) ##0.6, 0.009
+
+
+    # model = Sequential()
+    # model.add(Conv2D(32, (3, 3), activation='relu', padding='same', name='conv_1', #relu
+    #              input_shape=(num_samples, num_channels, 1)))
+    # model.add(MaxPooling2D((2, 2), name='maxpool_1'))
+    # model.add(Conv2D(64, (3, 3), activation='relu', padding='same', name='conv_2')) #relu
+    # model.add(MaxPooling2D((2, 2), name='maxpool_2'))
+    # model.add(Dropout(0.6)) 
+
+    # model.add(Conv2D(64, (3, 3), activation='tanh', padding='same', name='conv_extra')) #tanh
+    # model.add(MaxPooling2D((2, 2), name='maxpool_extra'))
+
+    # model.add(Conv2D(128, (3, 3), activation='tanh', padding='same', name='conv_3')) #tanh
+    # model.add(MaxPooling2D((2, 2), name='maxpool_3'))
+    # model.add(Conv2D(128, (3, 3), activation='relu', padding='same', name='conv_4')) #relu
+    # model.add(MaxPooling2D((2, 2), name='maxpool_4'))
+    # model.add(Flatten())
+    # model.add(Dropout(0.6)) 
+    # model.add(Dense(64, activation='relu', name='dense_1'))
+    # model.add(Dense(32, activation='relu', name='dense_2'))
+    # model.add(Dense(1, activation='sigmoid', name='output'))
+
    
-    adam = Adam(learning_rate=lr)
+    nAdam = tf.keras.optimizers.Nadam(learning_rate=lr)
+    #adam = Adam(learning_rate=lr)
     chk = ModelCheckpoint(best_model_pkl, monitor='val_accuracy', save_best_only=True, mode='max', verbose=1)
    
-    model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer=nAdam, metrics=['accuracy'])
    
-    history = model.fit(train, train_target, epochs=epochs, batch_size=batch_size, callbacks=[chk], validation_data=(validation,validation_target))
+    #history = model.fit(train, train_target, epochs=epochs, batch_size=batch_size, callbacks=[chk], validation_data=(validation,validation_target))
+
+    
+    history = model.fit(train, train_target, epochs=epochs, batch_size=batch_size, callbacks=[
+        tf.keras.callbacks.EarlyStopping(
+            monitor='val_loss',
+            patience=10,
+            restore_best_weights=True
+            
+        )
+    ], validation_data=(validation,validation_target))
+
+
     print("*** Model Summary ***")
  
     def printsummary(s):
@@ -421,8 +536,8 @@ for lr in (lr):
     plt.legend(['train', 'test'], loc='upper left')
     model_file = os.path.join(experimental_dir, timestamp + '_model_plot_1' + '.png')
     plt.savefig(model_file)
-    plt.close()
-    #plt.show()    # this opens a popup of the accuracy if you wish to see it, but
+    #plt.close()
+    plt.show()    # this opens a popup of the accuracy if you wish to see it, but
                    # it is also stored in the experiments folder
  
     #summarize history for loss
@@ -434,8 +549,8 @@ for lr in (lr):
     plt.legend(['train', 'test'], loc='upper left')
     model_file = os.path.join(experimental_dir, timestamp + '_model_plot_2' + '.png')
     plt.savefig(model_file)
-    plt.close()
-    #plt.show()    # this opens a popup of the loss if you wish to see it, but
+    #plt.close()
+    plt.show()    # this opens a popup of the loss if you wish to see it, but
                    # it is also stored in the experiments folder
  
     print("length of test is", len(test))
@@ -452,7 +567,7 @@ for lr in (lr):
     shutil.copy(groupsFile, backup_groupsFile)
     shutil.copy(targetsFile, backup_targetsFile)
  
-    plot_model(model, to_file=modeldiagram_file, show_shapes=True, show_layer_names=True)
+    #plot_model(model, to_file=modeldiagram_file, show_shapes=True, show_layer_names=True)
  
     experimentdata_file = os.path.join(experimental_dir,'experimentdata.txt')
     experimentdata_fn = open(experimentdata_file, "a")
