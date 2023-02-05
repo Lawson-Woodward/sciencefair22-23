@@ -437,7 +437,7 @@ for lr in (lr):
     # model.add(Dense(1, activation="sigmoid"))
 
     model = Sequential()
-    model.add(Conv2D(32, (3, 3), activation='tanh', padding='same', name='conv_1', #relu
+    model.add(Conv2D(64, (3, 3), activation='tanh', padding='same', name='conv_1', #relu
                  input_shape=(num_samples, num_channels, 1),kernel_regularizer=regularizers.l2(0.0095)))
     model.add(MaxPooling2D((2, 2), name='maxpool_1'))
     model.add(Conv2D(128, (3, 3), activation='relu', padding='same', name='conv_2',kernel_regularizer=regularizers.l2(0.0095))) #relu
@@ -456,17 +456,13 @@ for lr in (lr):
     model.add(MaxPooling2D((2, 2), name='maxpool_5', padding = 'same'))
     model.add(Conv2D(32, (3, 3), activation='tanh', padding='same', name='conv_6')) #relu ##64
     model.add(MaxPooling2D((2, 2), name='maxpool_6', padding= 'same'))
-    #model.add(GlobalMaxPooling2D())
-    
-    #model.add(Flatten())
 
-    # model.add(Reshape((16,384)))
-    # #model.add(Reshape((48,128)))
+    # model.add(Conv2D(64, (3, 3), activation='relu', padding='same', name='conv_7',kernel_regularizer=regularizers.l2(0.0095))) #tanh
+    # model.add(MaxPooling2D((2, 2), name='maxpool_7', padding = 'same'))
+    # model.add(Conv2D(128, (3, 3), activation='tanh', padding='same', name='conv_8')) #relu ##64
+    # model.add(MaxPooling2D((2, 2), name='maxpool_8', padding= 'same'))
 
-    # model.add(LSTM(128, return_sequences=True)) 
-    # model.add(Dropout(0.65))
-    # #model.add(Dense(64, activation='tanh'))
-    # model.add(LSTM(32))
+
     model.add(Flatten())
 
     model.add(Dropout(0.5)) 
