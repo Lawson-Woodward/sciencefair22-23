@@ -58,7 +58,7 @@ datasubset='S' #'S' is for all, 'S1 obj', 'S2 match' or 'S2 nomatch' are specifi
 
 lr=[.0005]#[.0005]     # you can turn any of the following 4 values into a list of values, and then
 lstm_units= 128 #256 # change the for statement on line 292 to run though all of the values for the
-epochs= 200 #150 #80 #20     # specific variable you want to change. It runs through all values of the list
+epochs= 20 #150 #80 #20     # specific variable you want to change. It runs through all values of the list
 batch_size=32 # in one run and outputs them to an 'experiments' folder
  
 n_train = .6   #percent of data to use for training and validation
@@ -387,7 +387,31 @@ for lr in (lr):
     #===========================================================================================#
     #BUILD A TIME SERIES CLASSIFICATION MODEL AND A SINGLE LAYER LSTM MODEL
     #===========================================================================================#
- 
+    
+    model = Sequential()
+    model.add(Conv2D(32, (3, 3), activation='relu', padding='same', name='conv_1',input_shape=(num_samples, num_channels, 1)))
+    model.add(MaxPooling2D((2, 2), name='maxpool_1'))
+    model.add(Conv2D(64, (3, 3), activation='relu', padding='same', name='conv_2'))     
+    model.add(MaxPooling2D((2, 2), name='maxpool_2'))
+    model.add(Conv2D(64, (3, 3), activation='relu', padding='same', name='conv_3'))
+    model.add(MaxPooling2D((2, 2), name='maxpool_3'))
+
+
+    model.add(Reshape((224,64)))
+    #model.add(Reshape((32,448)))
+    model.add(LSTM(128, return_sequences=True))
+    model.add(Dropout(0.65))
+    model.add(LSTM(32))
+
+
+    model.add(Flatten())
+
+
+    model.add(Dropout(0.5))
+    model.add(Dense(64, activation='tanh', name='dense_1'))
+    model.add(Dense(32, activation='tanh', name='dense_2'))
+    model.add(Dense(1, activation='sigmoid', name='output'))
+
    
     # model = Sequential()
     # model.add(Conv1D(filters=32,kernel_size=15, activation='relu', padding='same', name='conv_1', #relu
@@ -410,14 +434,14 @@ for lr in (lr):
     
     # model.add(Flatten())
 
-    # # model.add(Reshape((16,384)))
-    # # #model.add(Reshape((48,128)))
+    # model.add(Reshape((16,384)))
+    # #model.add(Reshape((48,128)))
 
-    # # model.add(LSTM(128, return_sequences=True)) 
-    # # model.add(Dropout(0.65))
-    # # #model.add(Dense(64, activation='tanh'))
-    # # model.add(LSTM(32))
-    # #model.add(Flatten())
+    # model.add(LSTM(128, return_sequences=True)) 
+    # model.add(Dropout(0.65))
+    # #model.add(Dense(64, activation='tanh'))
+    # model.add(LSTM(32))
+    # model.add(Flatten())
 
     # model.add(Dropout(0.65)) 
     # model.add(Dense(64, activation='relu', name='dense_1',kernel_regularizer=regularizers.l2(0.0095)))
@@ -436,39 +460,39 @@ for lr in (lr):
     # model.add(Dense(32, activation='relu'))
     # model.add(Dense(1, activation="sigmoid"))
 
-    model = Sequential()
-    model.add(Conv2D(64, (3, 3), activation='relu', padding='same', name='conv_1', #relu
-                 input_shape=(num_samples, num_channels, 1),kernel_regularizer=regularizers.l2(0.0095)))
-    model.add(MaxPooling2D((2, 2), name='maxpool_1'))
-    model.add(Conv2D(128, (3, 3), activation='relu', padding='same', name='conv_2',kernel_regularizer=regularizers.l2(0.0095))) #relu
-    model.add(MaxPooling2D((2, 2), name='maxpool_2'))
-    model.add(Dropout(0.5)) 
+    # model = Sequential()
+    # model.add(Conv2D(64, (3, 3), activation='relu', padding='same', name='conv_1', #relu
+    #              input_shape=(num_samples, num_channels, 1),kernel_regularizer=regularizers.l2(0.0095)))
+    # model.add(MaxPooling2D((2, 2), name='maxpool_1'))
+    # model.add(Conv2D(128, (3, 3), activation='relu', padding='same', name='conv_2',kernel_regularizer=regularizers.l2(0.0095))) #relu
+    # model.add(MaxPooling2D((2, 2), name='maxpool_2'))
+    # model.add(Dropout(0.5)) 
 
-    model.add(Conv2D(128, (3, 3), activation='tanh', padding='same', name='conv_extra',kernel_regularizer=regularizers.l2(0.0095))) #tanh
-    model.add(MaxPooling2D((2, 2), name='maxpool_extra'))
+    # model.add(Conv2D(128, (3, 3), activation='tanh', padding='same', name='conv_extra',kernel_regularizer=regularizers.l2(0.0095))) #tanh
+    # model.add(MaxPooling2D((2, 2), name='maxpool_extra'))
 
-    model.add(Conv2D(256, (3, 3), activation='tanh', padding='same', name='conv_3',kernel_regularizer=regularizers.l2(0.0095))) #tanh
-    model.add(MaxPooling2D((2, 2), name='maxpool_3'))
-    model.add(Conv2D(256, (3, 3), activation='relu', padding='same', name='conv_4',kernel_regularizer=regularizers.l2(0.0095))) #relu
-    model.add(MaxPooling2D((2, 2), name='maxpool_4'))
+    # model.add(Conv2D(256, (3, 3), activation='tanh', padding='same', name='conv_3',kernel_regularizer=regularizers.l2(0.0095))) #tanh
+    # model.add(MaxPooling2D((2, 2), name='maxpool_3'))
+    # model.add(Conv2D(256, (3, 3), activation='relu', padding='same', name='conv_4',kernel_regularizer=regularizers.l2(0.0095))) #relu
+    # model.add(MaxPooling2D((2, 2), name='maxpool_4'))
 
-    # # model.add(Conv2D(32, (3, 3), activation='tanh', padding='same', name='conv_5',kernel_regularizer=regularizers.l2(0.009))) #tanh
-    # # model.add(MaxPooling2D((2, 2), name='maxpool_5', padding = 'same'))
-    # # model.add(Conv2D(32, (3, 3), activation='relu', padding='same', name='conv_6')) #relu ##64
-    # # model.add(MaxPooling2D((2, 2), name='maxpool_6', padding= 'same'))
+    # # # model.add(Conv2D(32, (3, 3), activation='tanh', padding='same', name='conv_5',kernel_regularizer=regularizers.l2(0.009))) #tanh
+    # # # model.add(MaxPooling2D((2, 2), name='maxpool_5', padding = 'same'))
+    # # # model.add(Conv2D(32, (3, 3), activation='relu', padding='same', name='conv_6')) #relu ##64
+    # # # model.add(MaxPooling2D((2, 2), name='maxpool_6', padding= 'same'))
 
-    # model.add(Conv2D(64, (3, 3), activation='relu', padding='same', name='conv_7',kernel_regularizer=regularizers.l2(0.009))) #tanh
-    # model.add(MaxPooling2D((2, 2), name='maxpool_7', padding = 'same'))
-    # model.add(Conv2D(128, (3, 3), activation='tanh', padding='same', name='conv_8')) #relu ##64
-    # model.add(MaxPooling2D((2, 2), name='maxpool_8', padding= 'same'))
+    # # model.add(Conv2D(64, (3, 3), activation='relu', padding='same', name='conv_7',kernel_regularizer=regularizers.l2(0.009))) #tanh
+    # # model.add(MaxPooling2D((2, 2), name='maxpool_7', padding = 'same'))
+    # # model.add(Conv2D(128, (3, 3), activation='tanh', padding='same', name='conv_8')) #relu ##64
+    # # model.add(MaxPooling2D((2, 2), name='maxpool_8', padding= 'same'))
 
 
-    model.add(Flatten())
+    # model.add(Flatten())
 
-    model.add(Dropout(0.5)) 
-    model.add(Dense(128, activation='tanh', name='dense_1',kernel_regularizer=regularizers.l2(0.0095)))
-    model.add(Dense(64, activation='tanh', name='dense_2',kernel_regularizer=regularizers.l2(0.0095)))
-    model.add(Dense(1, activation='sigmoid', name='output',kernel_regularizer=regularizers.l2(0.0095))) ##0.6, 0.009
+    # model.add(Dropout(0.5)) 
+    # model.add(Dense(128, activation='tanh', name='dense_1',kernel_regularizer=regularizers.l2(0.0095)))
+    # model.add(Dense(64, activation='tanh', name='dense_2',kernel_regularizer=regularizers.l2(0.0095)))
+    # model.add(Dense(1, activation='sigmoid', name='output',kernel_regularizer=regularizers.l2(0.0095))) ##0.6, 0.009
 
 
     # model = Sequential()
@@ -567,19 +591,19 @@ for lr in (lr):
 
 
     ### Save the results to the experiment directory for future reference
-    modeldiagram_file = os.path.join(experimental_dir, timestamp + '_model_plot' +'.png')
-    backup_groupsFile = os.path.join(experimental_dir, timestamp + os.path.basename(groupsFile))
-    backup_targetsFile = os.path.join(experimental_dir, timestamp + os.path.basename(targetsFile))
-    shutil.copy(groupsFile, backup_groupsFile)
-    shutil.copy(targetsFile, backup_targetsFile)
+    # modeldiagram_file = os.path.join(experimental_dir, timestamp + '_model_plot' +'.png')
+    # backup_groupsFile = os.path.join(experimental_dir, timestamp + os.path.basename(groupsFile))
+    # backup_targetsFile = os.path.join(experimental_dir, timestamp + os.path.basename(targetsFile))
+    # shutil.copy(groupsFile, backup_groupsFile)
+    # shutil.copy(targetsFile, backup_targetsFile)
  
     #plot_model(model, to_file=modeldiagram_file, show_shapes=True, show_layer_names=True)
  
-    experimentdata_file = os.path.join(experimental_dir,'experimentdata.txt')
-    experimentdata_fn = open(experimentdata_file, "a")
-    spacedchannels=' '.join(channels)
-    logline=str(timestamp)+', '+str(accuracy)+', '+datasubset+', '+spacedchannels+', '+str(lr)+', '+str(lstm_units)+', '+str(epochs)+', '+str(batch_size)+'\n'
-    experimentdata_fn.writelines(logline)
-    experimentdata_fn.close()
+    # experimentdata_file = os.path.join(experimental_dir,'experimentdata.txt')
+    # experimentdata_fn = open(experimentdata_file, "a")
+    # spacedchannels=' '.join(channels)
+    # logline=str(timestamp)+', '+str(accuracy)+', '+datasubset+', '+spacedchannels+', '+str(lr)+', '+str(lstm_units)+', '+str(epochs)+', '+str(batch_size)+'\n'
+    # experimentdata_fn.writelines(logline)
+    # experimentdata_fn.close()
  
-exit()
+#exit()
